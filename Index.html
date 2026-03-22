@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProBalance 2026 | Фикс Профсоюза</title>
+    <style>
+        :root {
+            --bg: #0d1117; --card: #161b22; --accent: #58a6ff;
+            --success: #39d353; --error: #f85149; --text: #c9d1d9; --dim: #8b949e; --border: #30363d;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 10px; margin: 0; font-size: 13px; }
+        .container { width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1fr 1.3fr; gap: 15px; }
+        @media (max-width: 950px) { .container { grid-template-columns: 1fr; } }
+        
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; height: fit-content; }
+        h2 { font-size: 0.8rem; color: var(--accent); margin: 0 0 12px 0; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full { grid-column: span 2; }
+        .field { display: flex; flex-direction: column; gap: 3px; }
+        label { font-size: 0.6rem; color: var(--dim); text-transform: uppercase; }
+        
+        input { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 8px; color: var(--success); font-weight: bold; outline: none; font-size: 0.95rem; }
+        input:focus { border-color: var(--accent); }
+
+        .res-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .res-table td { padding: 8px 0; border-bottom: 1px solid rgba(48,54,61,0.3); font-size: 0.85rem; }
+        .code { color: var(--dim); font-family: monospace; font-size: 0.75rem; width: 50px; }
+        .val { text-align: right; font-weight: 600; color: #fff; }
+        .section-title { font-size: 0.75rem; color: var(--accent); font-weight: bold; padding-top: 15px !important; border: none !important; }
+
+        .summary-box { margin-top: 10px; padding: 10px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .gross-box { background: rgba(57, 211, 83, 0.05); border: 1px solid rgba(57, 211, 83, 0.2); }
+        .deduct-box { background: rgba(248, 81, 73, 0.05); border: 1px solid rgba(248, 81, 73, 0.2); margin-top: 5px; }
+        .net-box { background: rgba(187, 128, 255, 0.1); border: 1px solid rgba(187, 128, 255, 0.3); margin-top: 10px; }
+        .big-amt { font-size: 1.3rem; font-weight: 800; }
+        
+        .btn-clear { background: #21262d; border: 1px solid var(--border); color: var(--error); padding: 8px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; font-size: 0.7rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>📝 Электронная Расчётка </h2>
+        <div class="grid">
+            <div class="field full"><label>Оклад Ставка (205.04)</label><input type="number" id="rate" step="0.01" oninput="calc()"></div>
+            <div class="field"><label>План Часы (0005)</label><input type="number" id="hrs" oninput="calc()"></div>
+            <div class="field"><label>Празд.Часы. Раб. (1023)</label><input type="number" id="h_work" oninput="calc()"></div>
+            <div class="field"><label>Празд. Часы. Вых. (1024)</label><input type="number" id="h_off" oninput="calc()"></div>
+            <div class="field"><label>Ночные Часы. (1030)</label><input type="number" id="n_hrs" oninput="calc()"></div>
+            <div class="field"><label>Профстатус %</label><input type="number" id="p_p" oninput="calc()"></div>
+            <div class="field"><label>Интенсивн. %</label><input type="number" id="i_p" oninput="calc()"></div>
+            <div class="field"><label>фонд Рук. (5005)</label><input type="number" id="f_ruk" oninput="calc()"></div>
+            <div class="field"><label>фонд РукННУ (5007)</label><input type="number" id="f_nn" oninput="calc()"></div>
+            <div class="field"><label>Над.Вахт.Метод дн. (2130)</label><input type="number" id="v_days" oninput="calc()"></div>
+            <div class="field"><label>Комп.Молоко дн. (4324)</label><input type="number" id="m_days" oninput="calc()"></div>
+            <div class="field"><label>Проезд ч. (2017)</label><input type="number" id="t_hrs" oninput="calc()"></div>
+            <div class="field full"><label>Удержание питание (8125)</label><input type="number" id="u_food" oninput="calc()"></div>
+        </div>
+        <button class="btn-clear" onclick="resetAll()">СБРОСИТЬ ВСЁ</button>
+    </div>
+
+    <div class="card">
+        <h2>📊 Начисления </h2>
+        <table class="res-table">
+            <tr><td class="code">0005</td><td>Оплата по тарифу</td><td id="v0005" class="val">0.00</td></tr>
+            <tr><td class="code">1001</td><td>Доплата за вредность (6%)</td><td id="v1001" class="val">0.00</td></tr>
+            <tr><td class="code">1023</td><td>Оплата праздничных дней</td><td id="v1023" class="val">0.00</td></tr>
+            <tr><td class="code">1024</td><td>Доплата за выходной праздничный день</td><td id="v1024" class="val">0.00</td></tr>
+            <tr><td class="code">1030</td><td>Доплата за ночные часы</td><td id="v1030" class="val">0.00</td></tr>
+            <tr><td class="code">1250</td><td>Районный коэффициент</td><td id="v1250" class="val">0.00</td></tr>
+            <tr><td class="code">1251</td><td>Северная надбавка</td><td id="v1251" class="val">0.00</td></tr>
+            <tr><td class="code">2017</td><td>Оплата проезда</td><td id="v2017" class="val">0.00</td></tr>
+            <tr><td class="code">2020</td><td>Надбавка Профстатус</td><td id="v2020" class="val">0.00</td></tr>
+            <tr><td class="code">2022</td><td>Надбавка Интенсивность</td><td id="v2022" class="val">0.00</td></tr>
+            <tr><td class="code">2130</td><td>Надбавка за вахту</td><td id="v2130" class="val">0.00</td></tr>
+            <tr><td class="code">3149</td><td>Доп. питание (соцпакет)</td><td id="v3149" class="val">0.00</td></tr>
+            <tr><td class="code">4324</td><td>Компенсация молока</td><td id="v4324" class="val">0.00</td></tr>
+            <tr><td class="code">5001</td><td>Премия (30%)</td><td id="v5001" class="val">0.00</td></tr>
+            <tr><td class="code">5005</td><td>Фонд руководителя</td><td id="v5005" class="val">0.00</td></tr>
+            <tr><td class="code">5007</td><td>Фонд руководителя ННУ</td><td id="v5007" class="val">0.00</td></tr>
+
+            <tr><td colspan="3" class="section-title" style="color:var(--error)">УДЕРЖАНИЯ</td></tr>
+            <tr><td class="code">/32E</td><td style="color:var(--dim)">НалогУдДох (осн + 5007)</td><td id="v32E" class="val" style="color:var(--error)">0.00</td></tr>
+            <tr><td class="code">/3VE</td><td style="color:var(--dim)">НалогУдРК/СН</td><td id="v3VE" class="val" style="color:var(--error)">0.00</td></tr>
+            <tr><td class="code">8103</td><td style="color:var(--dim)">Профсоюз (1%)</td><td id="v8103" class="val" style="color:var(--error)">0.00</td></tr>
+            <tr><td class="code">8125</td><td style="color:var(--dim)">Удержание питание</td><td id="vFoodU" class="val" style="color:var(--error)">0.00</td></tr>
+        </table>
+
+        <div class="summary-box deduct-box">
+            <div><label style="color:var(--error)">ВСЕГО УДЕРЖАНО</label></div>
+            <div id="totalDeduct" class="big-amt" style="color:var(--error)">0.00 ₽</div>
+        </div>
+		<div class="summary-box gross-box">
+            <div><label style="color:var(--success)">ВСЕГО НАЧИСЛЕНО</label></div>
+            <div id="totalGross" class="big-amt" style="color:var(--success)">0.00 ₽</div>
+        </div>
+        
+       <div class="summary-box net-box">
+            <div><label style="color:var(--accent)">К ВЫПЛАТЕ</label></div>
+            <div id="totalNet" class="big-amt" style="color:var(--accent)">0.00 ₽</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fmt = n => n.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " ₽";
+
+    function resetAll() {
+        if(confirm('Очистить все данные?')) {
+            document.querySelectorAll('input').forEach(i => { i.value = ''; localStorage.removeItem('f_v_full_v4_'+i.id); });
+            calc();
+        }
+    }
+
+    function calc() {
+        const get = id => {
+            const el = document.getElementById(id);
+            if (el.value !== "") localStorage.setItem('f_v_full_v4_'+id, el.value);
+            return parseFloat(el.value) || 0;
+        };
+
+        if (!window.init) {
+            document.querySelectorAll('input').forEach(i => { const s = localStorage.getItem('f_v_full_v4_'+i.id); if(s) i.value = s; });
+            if(!document.getElementById('rate').value) document.getElementById('rate').value = "205.04";
+            window.init = true;
+        }
+
+        const rate = get('rate'), hrs = get('hrs'), hW = get('h_work'), hO = get('h_off'),
+              nH = get('n_hrs'), vD = get('v_days'), pP = get('p_p'), iP = get('i_p'),
+              tH = get('t_hrs'), mD = get('m_days'), uF = get('u_food'), 
+              fR = get('f_ruk'), fNN = get('f_nn');
+
+        // Начисления
+        const v0005 = Math.round(rate * hrs * 100) / 100;
+        const v1001 = Math.round(v0005 * 0.06 * 100) / 100;
+        const v1023 = hW * 256.30; 
+        const v1024 = hO * 500;
+        const v1030 = Math.round(nH * 82.016 * 100) / 100;
+        const v2020 = Math.round(v0005 * (pP / 100) * 100) / 100;
+        const v2022 = Math.round(v0005 * (iP / 100) * 100) / 100;
+        const v5001 = Math.round((v0005 + v1030 + v2020 + v2022) * 0.30 * 100) / 100;
+        const v5005 = fR;
+        const v5007 = fNN;
+
+        const baseForCoeff = v0005 + v1001 + v1023 + v1024 + v1030 + v2020 + v2022 + v5001 + v5005;
+
+        // Коэффициенты
+        const v1250 = Math.round(baseForCoeff * 0.70 * 100) / 100;
+        const v1251 = Math.round(baseForCoeff * 0.50 * 100) / 100;
+        
+        // Компенсации
+        const v2017 = tH * rate;
+        const v2130 = vD * 700;
+        const v3149 = hrs * 60; // ПИТАНИЕ
+        const v4324 = mD * 49.80; // МОЛОКО
+
+        const totalGross = baseForCoeff + v1250 + v1251 + v5007 + v2017 + v2130 + v3149 + v4324;
+        
+        // --- УДЕРЖАНИЯ ---
+        // 1. Налоги
+        const v32E = Math.floor((baseForCoeff + v5007 + v3149) * 0.13);
+        const v3VE = Math.floor((v1250 + v1251) * 0.13);
+        
+        // 2. Профсоюз: 1% от ВСЕГО, КРОМЕ ПИТАНИЯ (3149) и МОЛОКА (4324)
+        const unionBase = totalGross - v3149 - v4324;
+        const v8103 = Math.round(unionBase * 0.01 * 100) / 100;
+        
+        const totalDeduct = v32E + v3VE + v8103 + uF;
+
+        const set = (id, val) => { document.getElementById(id).innerText = fmt(val); };
+
+        set('v0005', v0005); set('v1001', v1001); set('v1023', v1023); set('v1024', v1024);
+        set('v1030', v1030); set('v1250', v1250); set('v1251', v1251); set('v2017', v2017);
+        set('v2020', v2020); set('v2022', v2022); set('v2130', v2130); set('v3149', v3149); 
+        set('v4324', v4324); set('v5001', v5001); set('v5005', v5005); set('v5007', v5007);
+        
+        set('v32E', v32E); set('v3VE', v3VE); set('v8103', v8103); set('vFoodU', uF);
+        
+        document.getElementById('totalGross').innerText = fmt(totalGross);
+        document.getElementById('totalDeduct').innerText = fmt(totalDeduct);
+        document.getElementById('totalNet').innerText = fmt(totalGross - totalDeduct);
+    }
+    window.onload = calc;
+</script>
+</body>
+</html>
